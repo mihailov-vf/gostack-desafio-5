@@ -6,6 +6,11 @@ interface Balance {
   total: number;
 }
 
+interface Statement {
+  transactions: Transaction[];
+  balance: Balance;
+}
+
 class TransactionsRepository {
   private transactions: Transaction[];
 
@@ -14,15 +19,45 @@ class TransactionsRepository {
   }
 
   public all(): Transaction[] {
-    // TODO
+    return this.transactions;
   }
 
   public getBalance(): Balance {
-    // TODO
+    const balanceAccumulator = {
+      income: 0,
+      outcome: 0,
+      total: 0,
+      changeValue(transaction: Transaction): void {
+        if (transaction.type === 'income') {
+          this.income += transaction.value;
+        } else {
+          this.outcome += transaction.value;
+        }
+
+        this.total = this.income - this.outcome;
+      },
+    };
+
+    return this.transactions.reduce((balance, transaction) => {
+      balance.changeValue(transaction);
+
+      return balance;
+    }, balanceAccumulator);
   }
 
-  public create(): Transaction {
-    // TODO
+  public create({ title, value, type }: Omit<Transaction, 'id'>): Transaction {
+    const transaction = new Transaction({ title, value, type });
+
+    this.transactions.push(transaction);
+
+    return transaction;
+  }
+
+  public getStatement(): Statement {
+    return {
+      transactions: this.all(),
+      balance: this.getBalance(),
+    };
   }
 }
 
